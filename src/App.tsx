@@ -1,25 +1,63 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React, { useState } from "react";
+import {
+  Container,
+  Row,
+  Spinner,
+  ImageContainer,
+  Dog,
+  Button,
+} from "./components";
 
 function App() {
+  const [url, setUrl] = useState<string>("");
+  const [opacity, setOpacity] = useState<number>(0);
+  const [loading, setLoading] = useState<boolean>(true);
+
+  async function getDogPicture() {
+    try {
+      setOpacity(0);
+      setUrl("");
+      setLoading(true);
+      while (true) {
+        const response = await fetch("https://random.dog/woof.json");
+        const { url }: { url: string } = await response.json();
+        const fileType: string = url.split(".")[2];
+        if (fileType === "mp4" || fileType === "webm") {
+          continue;
+        } else {
+          setUrl(url);
+          break;
+        }
+      }
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
+  const onButtonClick = () => getDogPicture();
+
+  const onImageLoad = () => setOpacity(1);
+
+  React.useEffect(() => {
+    getDogPicture();
+  }, []);
+
+  React.useEffect(() => {
+    if (opacity === 1) {
+      setLoading(false);
+    }
+  }, [opacity]);
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <Container>
+      <Row>
+        {loading ? <Spinner /> : null}
+        <ImageContainer opacity={opacity}>
+          {url && <Dog src={url} alt="dog" onLoad={onImageLoad} />}
+        </ImageContainer>
+        <Button onClick={onButtonClick}>Get dog picture</Button>
+      </Row>
+    </Container>
   );
 }
 
